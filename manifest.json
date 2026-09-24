@@ -1,0 +1,9 @@
+{
+  "name":"BIOGLOW HQ",
+  "short_name":"BIOGLOW HQ",
+  "start_url":".",
+  "display":"standalone",
+  "background_color":"#eff9f3",
+  "theme_color":"#0b6b4f",
+  "icons":[]
+}

@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b6b4f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="BIOGLOW HQ">
+<link rel="manifest" href="manifest.json">
+<title>BIOGLOW HQ</title>
+<style>
+:root{--green:#0b6b4f;--light:#eff9f3;--ink:#17352c;--gold:#f2c14e;--card:#fff;--muted:#678077}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:linear-gradient(#e9f7ef,#fff);color:var(--ink)}
+header{background:var(--green);color:white;padding:24px 18px 20px;border-radius:0 0 24px 24px}
+header h1{margin:0;font-size:30px}header p{margin:5px 0 0;opacity:.9}.wrap{max-width:850px;margin:auto;padding:16px}
+nav{display:flex;gap:8px;overflow:auto;padding:10px 0;position:sticky;top:0;background:#fff;z-index:2}
+button{font:inherit;border:0;border-radius:14px;padding:13px 16px;background:#dcefe7;color:var(--ink);font-weight:700;touch-action:manipulation}
+button.primary{background:var(--green);color:white}button.star{background:#fff4c9}button.danger{background:#ffe1df}
+.panel{background:var(--card);border-radius:20px;padding:18px;margin:14px 0;box-shadow:0 3px 15px #17352c12}
+h2{margin:0 0 8px}h3{margin-bottom:6px}.muted{color:var(--muted)}input,textarea,select{width:100%;font:inherit;border:2px solid #d7e5df;border-radius:13px;padding:13px;margin:6px 0 10px;background:white}textarea{min-height:100px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px}.tile{padding:18px;border-radius:18px;background:var(--light);min-height:105px}.tile b{display:block;font-size:18px;margin-top:7px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}.chip{cursor:pointer}.selected{outline:3px solid var(--gold)}
+.big{font-size:46px}.result{font-size:20px;background:#f5fbf7;border-radius:18px;padding:18px}
+.item{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;border-top:1px solid #e4eee9;padding:12px 0}.item:first-child{border-top:0}
+.small{font-size:13px}.hidden{display:none}.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#17352c;color:#fff;padding:12px 16px;border-radius:999px;display:none;z-index:9}
+</style>
+</head>
+<body>
+<header><div class="wrap"><h1>🌿 BIOGLOW HQ</h1><p id="subtitle">Our rainforest research team</p></div></header>
+<div class="wrap">
+<nav>
+<button data-tab="home">🏠 Home</button><button data-tab="name">🏷️ Team Name</button><button data-tab="safari">🦜 Name Safari</button><button data-tab="team">👥 Team</button><button data-tab="journal">📓 Journal</button>
+</nav>
+
+<section id="home" class="tab">
+<div class="panel"><h2 id="teamTitle">Welcome, Explorers!</h2><p class="muted">Your season-long team headquarters.</p></div>
+<div class="grid">
+<div class="tile" onclick="showTab('name')">🏷️<b>Name Mission</b><span class="small">Create your team identity.</span></div>
+<div class="tile" onclick="showTab('safari')">🦜<b>Name Safari</b><span class="small">Discover your researcher alter ego.</span></div>
+<div class="tile" onclick="showTab('journal')">📓<b>Team Journal</b><span class="small">Capture discoveries and ideas.</span></div>
+<div class="tile" onclick="showTab('team')">👥<b>Our Team</b><span class="small">People, roles and goals.</span></div>
+</div>
+<div class="panel"><h3>🎯 Tonight's mission</h3><p>Explore biodiversity, build the rainforest tree, and share what your team discovered.</p></div>
+</section>
+
+<section id="name" class="tab hidden">
+<div class="panel"><h2>🏷️ Team Name Mission</h2><p>Generate ideas, favorite the ones you like, then enter the name you choose.</p>
+<div class="grid" id="nameChoices"></div>
+<button class="primary" onclick="generateNames()">✨ Generate more</button>
+<h3>⭐ Favorites</h3><div id="favorites" class="chips"></div>
+<label>Official team name</label><input id="teamNameInput" placeholder="What will we be called?">
+<button class="primary" onclick="saveTeamName()">Save our team name</button>
+</div></section>
+
+<section id="safari" class="tab hidden">
+<div class="panel"><h2>🦜 Name Safari</h2><p>Everyone gets a rainforest research identity — coaches included.</p>
+<input id="safariName" placeholder="Enter your first name">
+<h3>Choose your research superpower</h3>
+<div class="chips" id="powers"></div>
+<button class="primary" onclick="runSafari()">🌿 Reveal my researcher identity</button>
+<div id="safariResult" class="result hidden" style="margin-top:14px"></div>
+</div>
+<div class="panel"><h3>🧑‍🔬 Safari Roster</h3><div id="safariRoster" class="muted">No researchers yet.</div></div>
+</section>
+
+<section id="team" class="tab hidden">
+<div class="panel"><h2>👥 Our Team</h2><div id="teamList"></div>
+<h3>Add a team member</h3><input id="memberName" placeholder="Name"><select id="memberRole"><option>Team Member</option><option>Coach</option></select><button class="primary" onclick="addMember()">Add</button></div>
+<div class="panel"><h3>🎯 Team goals</h3><textarea id="goals" placeholder="What do we want to discover, build or learn this season?"></textarea><button class="primary" onclick="saveGoals()">Save goals</button></div>
+</section>
+
+<section id="journal" class="tab hidden">
+<div class="panel"><h2>📓 Team Journal</h2><label>Session</label><select id="session"></select><label>What did we discover?</label><textarea id="discoveries"></textarea><label>Questions we have</label><textarea id="questions"></textarea><label>Ideas for later</label><textarea id="ideas"></textarea><label>Coach notes</label><textarea id="coachNotes"></textarea><button class="primary" onclick="saveJournal()">Save session</button></div>
+<div class="panel"><h3>💡 Idea Bank</h3><input id="ideaInput" placeholder="Capture an idea..."><button class="primary" onclick="addIdea()">Add idea</button><div id="ideaList"></div></div>
+</section>
+</div>
+<div id="toast" class="toast"></div>
+<script>
+const KEY="bioglowHQ_v1";
+let state=JSON.parse(localStorage.getItem(KEY)||'{"teamName":"","members":[{"name":"Harvey","role":"Team Member"},{"name":"Sawyer","role":"Team Member"},{"name":"Maurice","role":"Team Member"},{"name":"Olive","role":"Team Member"},{"name":"Michael","role":"Team Member"},{"name":"Jen","role":"Coach"},{"name":"Paul","role":"Coach"}],"goals":"","favorites":[],"safari":[],"journal":{},"ideas":[]}');
+const powers=["🫥 Camouflage","👂 Super Hearing","🌳 Tree Climbing","🌙 Night Vision","🪽 Flight","💪 Mega Strength"];
+const animals=["🦜 Toucan","🐸 Tree Frog","🦥 Sloth","🐆 Jaguar","🦋 Butterfly","🐒 Monkey","🐍 Boa","🦇 Bat"];
+const first=["Canopy","Treetop","Rainforest","Jungle","Wild","Emerald","Bio","Tropical","Treehouse","Biodiversity"];
+const second=["Explorers","Engineers","Builders","Bots","Scientists","Squad","Seekers","Inventors","Adventurers","Researchers"];
+function persist(){localStorage.setItem(KEY,JSON.stringify(state)); render()}
+function toast(x){let t=document.getElementById("toast");t.textContent=x;t.style.display="block";setTimeout(()=>t.style.display="none",1800)}
+function showTab(id){document.querySelectorAll(".tab").forEach(x=>x.classList.add("hidden"));document.getElementById(id).classList.remove("hidden");document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("primary",b.dataset.tab===id));window.scrollTo(0,0);render()}
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
+function generateNames(){let a=[];while(a.length<8){let x=first[Math.floor(Math.random()*first.length)]+" "+second[Math.floor(Math.random()*second.length)];if(!a.includes(x))a.push(x)}document.getElementById("nameChoices").innerHTML=a.map(x=>`<button onclick="favorite('${x}')">${x} ⭐</button>`).join("")}
+function favorite(x){if(!state.favorites.includes(x))state.favorites.push(x);persist();toast("Added to favorites!")}
+function saveTeamName(){state.teamName=document.getElementById("teamNameInput").value.trim();persist();toast("Team name saved!");showTab("home")}
+function runSafari(){let n=document.getElementById("safariName").value.trim();let p=document.querySelector(".power.selected")?.dataset.power;if(!n||!p){toast("Pick a name and a superpower first.");return}let a=animals[Math.floor(Math.random()*animals.length)];let specialties={"🫥 Camouflage":"Pattern Spotter","👂 Super Hearing":"Sound Tracker","🌳 Tree Climbing":"Canopy Scout","🌙 Night Vision":"Night Watcher","🪽 Flight":"Aerial Mapper","💪 Mega Strength":"Habitat Builder"};let r={name:n,power:p,animal:a,specialty:specialties[p]};state.safari=state.safari.filter(x=>x.name.toLowerCase()!==n.toLowerCase());state.safari.push(r);persist();document.getElementById("safariResult").classList.remove("hidden");document.getElementById("safariResult").innerHTML=`<div class="big">${a}</div><strong>${n}, the ${a.split(" ").slice(1).join(" ")||"Rainforest Researcher"}</strong><br>Power: ${p}<br>Specialty: <strong>${r.specialty}</strong>`;toast("Research identity revealed!")}
+function addMember(){let n=document.getElementById("memberName").value.trim();if(!n)return;state.members.push({name:n,role:document.getElementById("memberRole").value});persist();document.getElementById("memberName").value=""}
+function saveGoals(){state.goals=document.getElementById("goals").value;persist();toast("Goals saved!")}
+function saveJournal(){let s=document.getElementById("session").value;state.journal[s]={discoveries:discoveries.value,questions:questions.value,ideas:ideas.value,coachNotes:coachNotes.value};persist();toast("Session saved!")}
+function addIdea(){let x=ideaInput.value.trim();if(!x)return;state.ideas.push({text:x,date:new Date().toLocaleDateString()});persist();ideaInput.value=""}
+function render(){document.getElementById("teamTitle").textContent=state.teamName?`Welcome to ${state.teamName}!`:"Welcome, Explorers!";document.getElementById("subtitle").textContent=state.teamName?state.teamName+" • BIOGLOW 2026":"Our rainforest research team";document.getElementById("teamNameInput").value=state.teamName;document.getElementById("favorites").innerHTML=state.favorites.map(x=>`<button class="star" onclick="teamNameInput.value='${x}'">${x}</button>`).join("")||'<span class="muted">No favorites yet.</span>';document.getElementById("teamList").innerHTML=state.members.map((m,i)=>`<div class="item"><div><strong>${m.name}</strong><div class="small muted">${m.role}</div></div></div>`).join("");document.getElementById("goals").value=state.goals;document.getElementById("safariRoster").innerHTML=state.safari.map(r=>`<div class="item"><div><strong>${r.name}</strong> — ${r.animal}<div class="small muted">${r.power} • ${r.specialty}</div></div></div>`).join("")||"No researchers yet.";document.getElementById("ideaList").innerHTML=state.ideas.map(x=>`<div class="item"><div>💡 ${x.text}<div class="small muted">${x.date}</div></div></div>`).join("")||'<span class="muted">Nothing captured yet.</span>'}
+document.getElementById("powers").innerHTML=powers.map((p,i)=>`<button class="chip power" data-power="${p}" onclick="document.querySelectorAll('.power').forEach(x=>x.classList.remove('selected'));this.classList.add('selected')">${p}</button>`).join("");
+document.getElementById("session").innerHTML=Array.from({length:10},(_,i)=>`<option value="${i+1}">Session ${i+1}</option>`).join("");
+generateNames();render();
+if("serviceWorker"in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+</script>
+</body></html>
