@@ -202,6 +202,7 @@ footer{text-align:center;color:#78918b;font-size:12px;padding:12px 0 30px}
     <div id="safariResult" class="hidden" style="margin-top:16px"></div>
     <div id="animalCustomizer" class="hidden">
       <div class="panel" style="background:#fbfffd;margin-bottom:0">
+        <div id="editingResearcherHeader" class="result" style="margin-bottom:14px"></div>
         <div class="sectionHead"><div><div class="kicker">Creature workshop</div><h3>🎨 Make your animal yours</h3><p class="muted small">Change the details until your researcher feels like you.</p></div></div>
         <label>Animal nickname</label><input id="animalName" placeholder="e.g. Turbo">
         <label>Habitat</label><select id="animalHabitat"><option>🌳 Canopy</option><option>🌿 Understory</option><option>🌱 Forest Floor</option><option>💧 River</option><option>🌙 Nighttime</option></select>
@@ -235,9 +236,30 @@ footer{text-align:center;color:#78918b;font-size:12px;padding:12px 0 30px}
     <button class="primary" onclick="addMember()">Add to team</button>
   </div>
   <div class="panel">
-    <div class="sectionHead"><div><div class="kicker">Device controls</div><h2>⚙️ Season controls</h2></div></div>
-    <p class="muted small">Reset only the BIOGLOW data stored on this device.</p>
-    <button class="danger" onclick="resetSeason()">Reset BIOGLOW season data</button>
+    <div class="sectionHead"><div><div class="kicker">Device controls</div><h2>⚙️ Season controls</h2><p class="muted">Protect your team's work or move it to another device.</p></div></div>
+    <div class="buttonRow">
+      <button class="secondary" onclick="exportSeason()">📦 Export season backup</button>
+      <button class="secondary" onclick="document.getElementById('importFile').click()">📥 Import season backup</button>
+      <input id="importFile" type="file" accept=".json,application/json" class="hidden" onchange="importSeason(event)">
+    </div>
+    <p class="muted small" style="margin:14px 0 10px">Reset permanently deletes the BIOGLOW data stored on this device. Export a backup first if you may need it later.</p>
+    <button class="danger" onclick="openResetModal()">⚠️ Reset BIOGLOW season data</button>
+  </div>
+
+  <div id="resetModal" class="hidden" style="position:fixed;inset:0;z-index:100;background:#061f1bcc;backdrop-filter:blur(8px);padding:20px;display:flex;align-items:center;justify-content:center">
+    <div class="panel" style="max-width:520px;width:100%;margin:0;box-shadow:0 25px 70px #0006">
+      <div style="font-size:42px">⚠️</div>
+      <div class="kicker" style="color:#b33a30">DESTRUCTIVE ACTION</div>
+      <h2 style="margin-top:4px">Erase the BIOGLOW season?</h2>
+      <p>This will permanently delete the team name, researcher animals, journal entries, goals, ideas, favorites, and team members stored on this device.</p>
+      <p><strong>This cannot be undone.</strong> If you haven't already, export a season backup first.</p>
+      <label>Type <strong>DELETE THIS</strong> to unlock the reset</label>
+      <input id="resetConfirmInput" autocomplete="off" placeholder="DELETE THIS">
+      <div class="buttonRow" style="margin-top:14px">
+        <button class="secondary" onclick="closeResetModal()">Cancel</button>
+        <button id="confirmResetBtn" class="danger" disabled onclick="confirmReset()">Erase everything</button>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -337,13 +359,65 @@ function editResearcher(name){
  const r=state.safari.find(x=>x.name===name);if(!r)return;
  document.getElementById("safariName").value=r.name;selectPower(r.power);const i=animals.findIndex(a=>a[1]===r.animal);selectAnimal(i);
  document.getElementById("animalName").value=r.custom?.name||"";document.getElementById("animalHabitat").value=r.custom?.habitat||r.habitat;document.getElementById("animalMove").value=r.custom?.move||"";document.getElementById("animalSnack").value=r.custom?.snack||"";
+ const displayAnimal = r.custom?.name ? `${r.name} the ${r.animal} • "${r.custom.name}"` : `${r.name} the ${r.animal}`;
+ document.getElementById("editingResearcherHeader").innerHTML =
+   `<div class="researchCard"><div class="researchAvatar">${esc(r.emoji||"🐾")}</div><div><div class="kicker">Editing researcher</div><h3 style="font-size:22px;margin:3px 0">${esc(displayAnimal)}</h3><div class="muted small">${esc(r.power)} • ${esc(r.specialty)}</div></div></div>`;
  document.getElementById("animalCustomizer").classList.remove("hidden");showTab("safari");window.scrollTo({top:document.getElementById("animalCustomizer").offsetTop-80,behavior:"smooth"});
 }
 function addMember(){const n=document.getElementById("memberName").value.trim();if(!n)return;state.members.push({name:n,role:document.getElementById("memberRole").value});persist();document.getElementById("memberName").value=""}
 function saveGoals(){state.goals=document.getElementById("goals").value;persist();toast("Goals saved!")}
 function saveJournal(){const s=document.getElementById("session").value;state.journal[s]={discoveries:discoveries.value,questions:questions.value,ideas:ideas.value,coachNotes:coachNotes.value};persist();toast("Session saved!")}
 function addIdea(){const x=ideaInput.value.trim();if(!x)return;state.ideas.push({text:x,date:new Date().toLocaleDateString()});persist();ideaInput.value=""}
-function resetSeason(){if(!confirm("Reset all BIOGLOW team data on this device? This cannot be undone."))return;localStorage.removeItem(KEY);location.reload()}
+function exportSeason(){
+ const backup={
+   app:"BIOGLOW HQ",
+   version:4,
+   exportedAt:new Date().toISOString(),
+   data:state
+ };
+ const blob=new Blob([JSON.stringify(backup,null,2)],{type:"application/json"});
+ const url=URL.createObjectURL(blob);
+ const a=document.createElement("a");
+ a.href=url;
+ a.download=`bioglow-season-backup-${new Date().toISOString().slice(0,10)}.json`;
+ document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+ toast("Backup exported! 📦");
+}
+function importSeason(event){
+ const file=event.target.files?.[0]; if(!file)return;
+ const reader=new FileReader();
+ reader.onload=()=>{
+   try{
+     const backup=JSON.parse(reader.result);
+     if(backup.app!=="BIOGLOW HQ" || !backup.data || typeof backup.data!=="object") throw new Error("Invalid BIOGLOW backup");
+     if(!confirm("Import this backup? It will replace the BIOGLOW data currently stored on this device.")) return;
+     state=Object.assign({},defaultState,backup.data);
+     state.members=Array.isArray(state.members)?state.members:defaultState.members;
+     state.safari=Array.isArray(state.safari)?state.safari:[];
+     state.favorites=Array.isArray(state.favorites)?state.favorites:[];
+     state.ideas=Array.isArray(state.ideas)?state.ideas:[];
+     state.journal=state.journal&&typeof state.journal==="object"?state.journal:{};
+     persist(); render();
+     toast("Season restored! 🌿");
+   }catch(e){alert("That file doesn't look like a valid BIOGLOW HQ backup. Nothing was changed.");}
+   event.target.value="";
+ };
+ reader.readAsText(file);
+}
+function openResetModal(){
+ document.getElementById("resetModal").classList.remove("hidden");
+ document.getElementById("resetConfirmInput").value="";
+ document.getElementById("confirmResetBtn").disabled=true;
+ setTimeout(()=>document.getElementById("resetConfirmInput").focus(),50);
+}
+function closeResetModal(){document.getElementById("resetModal").classList.add("hidden")}
+function confirmReset(){
+ if(document.getElementById("resetConfirmInput").value.trim()!=="DELETE THIS")return;
+ localStorage.removeItem(KEY);location.reload();
+}
+document.getElementById("resetConfirmInput").addEventListener("input",e=>{
+ document.getElementById("confirmResetBtn").disabled=e.target.value.trim()!=="DELETE THIS";
+});
 
 function render(){
  document.getElementById("homeTitle").textContent=state.teamName?`Welcome to ${state.teamName}!`:"Welcome, Explorers!";
@@ -357,12 +431,12 @@ function render(){
  document.getElementById("favorites").innerHTML=state.favorites.map(x=>`<button class="chip" onclick="chooseName('${x.replace(/'/g,"\\'")}')">⭐ ${esc(x)}</button>`).join("")||'<span class="muted small">No favorites yet.</span>';
  document.getElementById("teamList").innerHTML=state.members.map(m=>{
    const r=state.safari.find(x=>x.name.toLowerCase()===m.name.toLowerCase());
-   return `<div class="member"><div class="memberAvatar">${r?.emoji||"🧑‍🔬"}</div><div><strong>${esc(m.name)}</strong><div class="small muted">${esc(m.role)}</div>${r?`<div class="small" style="margin-top:3px"><b>${esc(r.custom?.name||r.animal)}</b> • ${esc(r.power)}</div>`:"<div class=\"small muted\" style=\"margin-top:3px\">No researcher profile yet</div>"}</div></div>`
+   return `<div class="member"><div class="memberAvatar">${r?.emoji||"🧑‍🔬"}</div><div><strong>${esc(m.name)}</strong><div class="small muted">${esc(m.role)}</div>${r?`<div class="small" style="margin-top:3px"><b>${esc(r.name)} the ${esc(r.animal)}</b>${r.custom?.name ? ` <span class="muted">“${esc(r.custom.name)}”</span>` : ""} • ${esc(r.power)}</div>`:"<div class=\"small muted\" style=\"margin-top:3px\">No researcher profile yet</div>"}</div></div>`
  }).join("");
  document.getElementById("goals").value=state.goals;
  document.getElementById("safariRoster").innerHTML=state.safari.length?state.safari.map(r=>`
  <article class="researchTile">
-  <div class="researchTop"><div class="researchAnimal">${esc(r.emoji||"🐾")}</div><div><div class="researchName">${esc(r.name)}</div><div class="researchMeta">${esc(r.custom?.name||r.animal)} • ${esc(r.specialty)}</div></div></div>
+  <div class="researchTop"><div class="researchAnimal">${esc(r.emoji||"🐾")}</div><div><div class="researchName">${esc(r.name)} the ${esc(r.animal)}</div><div class="researchMeta">${r.custom?.name ? `“${esc(r.custom.name)}” • ` : ""}${esc(r.specialty)}</div></div></div>
   <div class="badges"><span class="badge">${esc(r.power)}</span><span class="badge">🌿 ${esc(r.custom?.habitat||r.habitat)}</span></div>
   <div class="attributes">
    <div class="attr"><b>Animal</b>${esc(r.animal)}</div>
