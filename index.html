@@ -50,7 +50,8 @@ h2{margin:0 0 8px}h3{margin-bottom:6px}.muted{color:var(--muted)}input,textarea,
 <button class="primary" onclick="generateNames()">✨ Generate more</button>
 <h3>⭐ Favorites</h3><div id="favorites" class="chips"></div>
 <label>Official team name</label><input id="teamNameInput" placeholder="What will we be called?">
-<button class="primary" onclick="saveTeamName()">Save our team name</button>
+<button class="primary" onclick="saveTeamName()">🚀 Launch our team name</button>
+<div id="nameCelebration" class="result hidden" style="margin-top:14px"></div>
 </div></section>
 
 <section id="safari" class="tab hidden">
@@ -60,6 +61,15 @@ h2{margin:0 0 8px}h3{margin-bottom:6px}.muted{color:var(--muted)}input,textarea,
 <div class="chips" id="powers"></div>
 <button class="primary" onclick="runSafari()">🌿 Reveal my researcher identity</button>
 <div id="safariResult" class="result hidden" style="margin-top:14px"></div>
+<div id="animalCustomizer" class="panel hidden" style="margin-top:12px">
+<h3>🎨 Make your animal yours</h3>
+<p class="muted">Once you've discovered your animal, you can customize its name, habitat, special move, and favorite snack.</p>
+<label>Animal name</label><input id="animalName" placeholder="e.g. Turbo">
+<label>Habitat</label><select id="animalHabitat"><option>🌳 Canopy</option><option>🌿 Understory</option><option>🌱 Forest Floor</option><option>💧 River</option><option>🌙 Nighttime</option></select>
+<label>Special move</label><input id="animalMove" placeholder="e.g. Sonic tree leap">
+<label>Favorite snack</label><input id="animalSnack" placeholder="e.g. mangoes">
+<button class="primary" onclick="saveAnimal()">Save my animal</button>
+</div>
 </div>
 <div class="panel"><h3>🧑‍🔬 Safari Roster</h3><div id="safariRoster" class="muted">No researchers yet.</div></div>
 </section>
@@ -67,6 +77,10 @@ h2{margin:0 0 8px}h3{margin-bottom:6px}.muted{color:var(--muted)}input,textarea,
 <section id="team" class="tab hidden">
 <div class="panel"><h2>👥 Our Team</h2><div id="teamList"></div>
 <h3>Add a team member</h3><input id="memberName" placeholder="Name"><select id="memberRole"><option>Team Member</option><option>Coach</option></select><button class="primary" onclick="addMember()">Add</button></div>
+<div class="panel"><h3>⚙️ Season controls</h3>
+<p class="muted">Testing the app? Reset only the BIOGLOW data stored on this device.</p>
+<button class="danger" onclick="resetSeason()">Reset BIOGLOW season data</button>
+</div>
 <div class="panel"><h3>🎯 Team goals</h3><textarea id="goals" placeholder="What do we want to discover, build or learn this season?"></textarea><button class="primary" onclick="saveGoals()">Save goals</button></div>
 </section>
 
@@ -81,21 +95,55 @@ const KEY="bioglowHQ_v1";
 let state=JSON.parse(localStorage.getItem(KEY)||'{"teamName":"","members":[{"name":"Harvey","role":"Team Member"},{"name":"Sawyer","role":"Team Member"},{"name":"Maurice","role":"Team Member"},{"name":"Olive","role":"Team Member"},{"name":"Michael","role":"Team Member"},{"name":"Jen","role":"Coach"},{"name":"Paul","role":"Coach"}],"goals":"","favorites":[],"safari":[],"journal":{},"ideas":[]}');
 const powers=["🫥 Camouflage","👂 Super Hearing","🌳 Tree Climbing","🌙 Night Vision","🪽 Flight","💪 Mega Strength"];
 const animals=["🦜 Toucan","🐸 Tree Frog","🦥 Sloth","🐆 Jaguar","🦋 Butterfly","🐒 Monkey","🐍 Boa","🦇 Bat"];
-const first=["Canopy","Treetop","Rainforest","Jungle","Wild","Emerald","Bio","Tropical","Treehouse","Biodiversity"];
-const second=["Explorers","Engineers","Builders","Bots","Scientists","Squad","Seekers","Inventors","Adventurers","Researchers"];
+const first=["Canopy","Treetop","Rainforest","Jungle","Wild","Emerald","Bio","Tropical","Treehouse","Biodiversity","Jungle","Amazon","Wildlife","Leaf","Vine"];
+const second=["Explorers","Engineers","Builders","Bots","Scientists","Squad","Seekers","Inventors","Adventurers","Researchers","Rangers","Rovers","Crew","Quest","Lab"];
 function persist(){localStorage.setItem(KEY,JSON.stringify(state)); render()}
 function toast(x){let t=document.getElementById("toast");t.textContent=x;t.style.display="block";setTimeout(()=>t.style.display="none",1800)}
 function showTab(id){document.querySelectorAll(".tab").forEach(x=>x.classList.add("hidden"));document.getElementById(id).classList.remove("hidden");document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("primary",b.dataset.tab===id));window.scrollTo(0,0);render()}
 document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
 function generateNames(){let a=[];while(a.length<8){let x=first[Math.floor(Math.random()*first.length)]+" "+second[Math.floor(Math.random()*second.length)];if(!a.includes(x))a.push(x)}document.getElementById("nameChoices").innerHTML=a.map(x=>`<button onclick="favorite('${x}')">${x} ⭐</button>`).join("")}
 function favorite(x){if(!state.favorites.includes(x))state.favorites.push(x);persist();toast("Added to favorites!")}
-function saveTeamName(){state.teamName=document.getElementById("teamNameInput").value.trim();persist();toast("Team name saved!");showTab("home")}
-function runSafari(){let n=document.getElementById("safariName").value.trim();let p=document.querySelector(".power.selected")?.dataset.power;if(!n||!p){toast("Pick a name and a superpower first.");return}let a=animals[Math.floor(Math.random()*animals.length)];let specialties={"🫥 Camouflage":"Pattern Spotter","👂 Super Hearing":"Sound Tracker","🌳 Tree Climbing":"Canopy Scout","🌙 Night Vision":"Night Watcher","🪽 Flight":"Aerial Mapper","💪 Mega Strength":"Habitat Builder"};let r={name:n,power:p,animal:a,specialty:specialties[p]};state.safari=state.safari.filter(x=>x.name.toLowerCase()!==n.toLowerCase());state.safari.push(r);persist();document.getElementById("safariResult").classList.remove("hidden");document.getElementById("safariResult").innerHTML=`<div class="big">${a}</div><strong>${n}, the ${a.split(" ").slice(1).join(" ")||"Rainforest Researcher"}</strong><br>Power: ${p}<br>Specialty: <strong>${r.specialty}</strong>`;toast("Research identity revealed!")}
+function saveTeamName(){
+ let n=document.getElementById("teamNameInput").value.trim();
+ if(!n){toast("Give your team a name first!");return}
+ state.teamName=n; persist();
+ let el=document.getElementById("nameCelebration");
+ el.classList.remove("hidden");
+ el.innerHTML=`<div style="font-size:44px">🌿 🎉 🦜 🎉 🌿</div><h2>Welcome, ${n}!</h2><p>Your expedition has officially begun.</p><p><strong>Mission 001 is complete.</strong> From now on, this is your team's headquarters.</p><button class="primary" onclick="showTab('safari')">Meet our researchers →</button>`;
+ toast("TEAM NAME LOCKED IN! 🎉");
+}
+function runSafari(){
+ let n=document.getElementById("safariName").value.trim();
+ let p=document.querySelector(".power.selected")?.dataset.power;
+ if(!n||!p){toast("Pick a name and a superpower first.");return}
+ let a=animals[Math.floor(Math.random()*animals.length)];
+ let specialties={"🫥 Camouflage":"Pattern Spotter","👂 Super Hearing":"Sound Tracker","🌳 Tree Climbing":"Canopy Scout","🌙 Night Vision":"Night Watcher","🪽 Flight":"Aerial Mapper","💪 Mega Strength":"Habitat Builder"};
+ let r={name:n,power:p,animal:a,specialty:specialties[p],custom:{name:"",habitat:"🌳 Canopy",move:"",snack:""}};
+ state.safari=state.safari.filter(x=>x.name.toLowerCase()!==n.toLowerCase());
+ state.safari.push(r); persist();
+ document.getElementById("safariResult").classList.remove("hidden");
+ document.getElementById("animalCustomizer").classList.remove("hidden");
+ document.getElementById("safariResult").innerHTML=`<div class="big">${a}</div><strong>${n}, the ${a.split(" ").slice(1).join(" ")||"Rainforest Researcher"}</strong><br>Power: ${p}<br>Specialty: <strong>${r.specialty}</strong><br><br>Now make your animal uniquely yours!`;
+ document.getElementById("animalName").value="";document.getElementById("animalMove").value="";document.getElementById("animalSnack").value="";
+ toast("Research identity revealed!");
+}
+function saveAnimal(){
+ let n=document.getElementById("safariName").value.trim();
+ let r=state.safari.find(x=>x.name.toLowerCase()===n.toLowerCase());
+ if(!r){toast("Reveal your researcher first.");return}
+ r.custom={name:document.getElementById("animalName").value.trim(),habitat:document.getElementById("animalHabitat").value,move:document.getElementById("animalMove").value.trim(),snack:document.getElementById("animalSnack").value.trim()};
+ persist();toast("Animal profile updated! 🐾");
+}
 function addMember(){let n=document.getElementById("memberName").value.trim();if(!n)return;state.members.push({name:n,role:document.getElementById("memberRole").value});persist();document.getElementById("memberName").value=""}
 function saveGoals(){state.goals=document.getElementById("goals").value;persist();toast("Goals saved!")}
 function saveJournal(){let s=document.getElementById("session").value;state.journal[s]={discoveries:discoveries.value,questions:questions.value,ideas:ideas.value,coachNotes:coachNotes.value};persist();toast("Session saved!")}
 function addIdea(){let x=ideaInput.value.trim();if(!x)return;state.ideas.push({text:x,date:new Date().toLocaleDateString()});persist();ideaInput.value=""}
-function render(){document.getElementById("teamTitle").textContent=state.teamName?`Welcome to ${state.teamName}!`:"Welcome, Explorers!";document.getElementById("subtitle").textContent=state.teamName?state.teamName+" • BIOGLOW 2026":"Our rainforest research team";document.getElementById("teamNameInput").value=state.teamName;document.getElementById("favorites").innerHTML=state.favorites.map(x=>`<button class="star" onclick="teamNameInput.value='${x}'">${x}</button>`).join("")||'<span class="muted">No favorites yet.</span>';document.getElementById("teamList").innerHTML=state.members.map((m,i)=>`<div class="item"><div><strong>${m.name}</strong><div class="small muted">${m.role}</div></div></div>`).join("");document.getElementById("goals").value=state.goals;document.getElementById("safariRoster").innerHTML=state.safari.map(r=>`<div class="item"><div><strong>${r.name}</strong> — ${r.animal}<div class="small muted">${r.power} • ${r.specialty}</div></div></div>`).join("")||"No researchers yet.";document.getElementById("ideaList").innerHTML=state.ideas.map(x=>`<div class="item"><div>💡 ${x.text}<div class="small muted">${x.date}</div></div></div>`).join("")||'<span class="muted">Nothing captured yet.</span>'}
+function resetSeason(){
+ if(!confirm("Reset all BIOGLOW team data on this device? This cannot be undone."))return;
+ localStorage.removeItem(KEY);
+ location.reload();
+}
+function render(){document.getElementById("teamTitle").textContent=state.teamName?`Welcome to ${state.teamName}!`:"Welcome, Explorers!";document.getElementById("subtitle").textContent=state.teamName?state.teamName+" • BIOGLOW 2026":"Our rainforest research team";document.getElementById("teamNameInput").value=state.teamName;document.getElementById("favorites").innerHTML=state.favorites.map(x=>`<button class="star" onclick="teamNameInput.value='${x}'">${x}</button>`).join("")||'<span class="muted">No favorites yet.</span>';document.getElementById("teamList").innerHTML=state.members.map((m,i)=>`<div class="item"><div><strong>${m.name}</strong><div class="small muted">${m.role}</div></div></div>`).join("");document.getElementById("goals").value=state.goals;document.getElementById("safariRoster").innerHTML=state.safari.map(r=>`<div class="item"><div><strong>${r.name}</strong> — ${r.animal}<div class="small muted">${r.power} • ${r.specialty}${r.custom?.name?`<br>🐾 ${r.custom.name} • ${r.custom.habitat}<br>⚡ ${r.custom.move||"No special move yet"} • 🍴 ${r.custom.snack||"Snack TBD"}`:""}</div></div></div>`).join("")||"No researchers yet.";document.getElementById("ideaList").innerHTML=state.ideas.map(x=>`<div class="item"><div>💡 ${x.text}<div class="small muted">${x.date}</div></div></div>`).join("")||'<span class="muted">Nothing captured yet.</span>'}
 document.getElementById("powers").innerHTML=powers.map((p,i)=>`<button class="chip power" data-power="${p}" onclick="document.querySelectorAll('.power').forEach(x=>x.classList.remove('selected'));this.classList.add('selected')">${p}</button>`).join("");
 document.getElementById("session").innerHTML=Array.from({length:10},(_,i)=>`<option value="${i+1}">Session ${i+1}</option>`).join("");
 generateNames();render();
