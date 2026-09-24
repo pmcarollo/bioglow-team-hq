@@ -1,3 +1,3 @@
-# BIOGLOW HQ v6
+# BIOGLOW HQ v7
 Upload index.html, manifest.json, sw.js, and README.md to the root of the GitHub Pages repository.
-v6 adds realistic rainforest habitat choices, fixes per-session journal persistence/loading, and clears the animal creation form after saving.
+v7 adds editable team roster management and links Safari researchers to team members by stable member ID, with a picker in Name Safari.
