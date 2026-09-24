@@ -205,7 +205,20 @@ footer{text-align:center;color:#78918b;font-size:12px;padding:12px 0 30px}
         <div id="editingResearcherHeader" class="result" style="margin-bottom:14px"></div>
         <div class="sectionHead"><div><div class="kicker">Creature workshop</div><h3>🎨 Make your animal yours</h3><p class="muted small">Change the details until your researcher feels like you.</p></div></div>
         <label>Animal nickname</label><input id="animalName" placeholder="e.g. Turbo">
-        <label>Habitat</label><select id="animalHabitat"><option>🌳 Canopy</option><option>🌿 Understory</option><option>🌱 Forest Floor</option><option>💧 River</option><option>🌙 Nighttime</option></select>
+        <label>Habitat</label><select id="animalHabitat">
+<option>🌳 Emergent Layer</option>
+<option>🌿 Canopy</option>
+<option>🍃 Understory</option>
+<option>🌱 Forest Floor</option>
+<option>🪵 Leaf Litter & Fallen Logs</option>
+<option>💧 River & Stream</option>
+<option>🌊 Flooded Forest</option>
+<option>🪷 Wetland & Swamp</option>
+<option>🪨 Rocky Outcrop</option>
+<option>🌧️ Rainy-Season Waterway</option>
+<option>🌙 Nocturnal Forest</option>
+<option>🌸 Forest Clearing</option>
+</select>
         <label>Special move</label><input id="animalMove" placeholder="e.g. Sonic tree leap">
         <label>Favorite snack</label><input id="animalSnack" placeholder="e.g. mangoes">
         <div class="buttonRow"><button class="primary" onclick="saveAnimal()">💾 Save my animal</button></div>
@@ -266,7 +279,7 @@ footer{text-align:center;color:#78918b;font-size:12px;padding:12px 0 30px}
 <section id="journal" class="tab hidden">
   <div class="panel">
     <div class="sectionHead"><div><div class="kicker">Season notebook</div><h2>📓 Team Journal</h2><p class="muted">Keep the team's discoveries, questions and ideas together.</p></div></div>
-    <label>Session</label><select id="session"></select>
+    <label>Session</label><select id="session" onchange="loadJournal()"></select>
     <label>What did we discover?</label><textarea id="discoveries"></textarea>
     <label>Questions we have</label><textarea id="questions"></textarea>
     <label>Ideas for later</label><textarea id="ideas"></textarea>
@@ -353,7 +366,17 @@ function saveAnimal(){
  const r=state.safari.find(x=>x.name.toLowerCase()===name.toLowerCase())||state.safari[state.safari.length-1];
  if(!r){toast("Create a researcher first.");return}
  r.custom={name:document.getElementById("animalName").value.trim(),habitat:document.getElementById("animalHabitat").value,move:document.getElementById("animalMove").value.trim(),snack:document.getElementById("animalSnack").value.trim()};
- persist();toast("Animal profile saved! 🐾");
+ persist();
+ document.getElementById("safariName").value="";
+ document.querySelectorAll(".power,.animalCard").forEach(x=>x.classList.remove("selected"));
+ document.getElementById("animalName").value="";
+ document.getElementById("animalHabitat").selectedIndex=0;
+ document.getElementById("animalMove").value="";
+ document.getElementById("animalSnack").value="";
+ document.getElementById("animalCustomizer").classList.add("hidden");
+ document.getElementById("safariResult").classList.add("hidden");
+ document.getElementById("editingResearcherHeader").innerHTML="";
+ toast("Animal profile saved! 🐾 Ready for the next researcher.");
 }
 function editResearcher(name){
  const r=state.safari.find(x=>x.name===name);if(!r)return;
@@ -366,8 +389,28 @@ function editResearcher(name){
 }
 function addMember(){const n=document.getElementById("memberName").value.trim();if(!n)return;state.members.push({name:n,role:document.getElementById("memberRole").value});persist();document.getElementById("memberName").value=""}
 function saveGoals(){state.goals=document.getElementById("goals").value;persist();toast("Goals saved!")}
-function saveJournal(){const s=document.getElementById("session").value;state.journal[s]={discoveries:discoveries.value,questions:questions.value,ideas:ideas.value,coachNotes:coachNotes.value};persist();toast("Session saved!")}
-function addIdea(){const x=ideaInput.value.trim();if(!x)return;state.ideas.push({text:x,date:new Date().toLocaleDateString()});persist();ideaInput.value=""}
+function loadJournal(){
+ const s=document.getElementById("session").value;
+ const entry=state.journal?.[s]||{};
+ document.getElementById("discoveries").value=entry.discoveries||"";
+ document.getElementById("questions").value=entry.questions||"";
+ document.getElementById("ideas").value=entry.ideas||"";
+ document.getElementById("coachNotes").value=entry.coachNotes||"";
+}
+function saveJournal(){
+ const s=document.getElementById("session").value;
+ if(!state.journal||typeof state.journal!=="object")state.journal={};
+ state.journal[s]={
+   discoveries:document.getElementById("discoveries").value,
+   questions:document.getElementById("questions").value,
+   ideas:document.getElementById("ideas").value,
+   coachNotes:document.getElementById("coachNotes").value
+ };
+ persist();
+ loadJournal();
+ toast(`Session ${s} saved! 📓`);
+}
+function addIdea(){const x=document.getElementById("ideaInput").value.trim();if(!x)return;state.ideas.push({text:x,date:new Date().toLocaleDateString()});persist();document.getElementById("ideaInput").value=""}
 function exportSeason(){
  const backup={
    app:"BIOGLOW HQ",
@@ -451,6 +494,7 @@ function render(){
 document.getElementById("powers").innerHTML=powers.map(p=>`<button class="chip power" data-power="${esc(p)}" onclick="selectPower('${p.replace(/'/g,"\\'")}')">${esc(p)}</button>`).join("");
 document.getElementById("animalPicker").innerHTML=animals.map((a,i)=>`<button class="animalCard" data-i="${i}" onclick="selectAnimal(${i})"><div class="emoji">${a[0]}</div><strong>${esc(a[1])}</strong><small>${esc(a[2])}</small></button>`).join("");
 document.getElementById("session").innerHTML=Array.from({length:10},(_,i)=>`<option value="${i+1}">Session ${i+1}</option>`).join("");
+ loadJournal();
 generateNames();render();
 if("serviceWorker"in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
 </script>

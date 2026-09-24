@@ -1,3 +1,3 @@
-# BIOGLOW HQ v5
+# BIOGLOW HQ v6
 Upload index.html, manifest.json, sw.js, and README.md to the root of the GitHub Pages repository.
-v5 adds season export/import backups and a typed destructive reset confirmation.
+v6 adds realistic rainforest habitat choices, fixes per-session journal persistence/loading, and clears the animal creation form after saving.
